@@ -75,6 +75,8 @@ async function getJwks(authority: string): Promise<JWKRepository> {
   }
 }
 
+const DEFAULT_AUTHORITY = process.env.NEXT_PUBLIC_COGNITO_AUTHORITY || "";
+
 /**
  * Validates a JWT token against the provided authority and required scopes
  * @param token The JWT token to validate
@@ -88,7 +90,9 @@ export async function validateToken(
   options: {
     authority: string;
     issuer?: string;
-  } = {}
+  } = {
+    authority: DEFAULT_AUTHORITY,
+  }
 ): Promise<ValidationResult> {
   try {
     if (!token) {
