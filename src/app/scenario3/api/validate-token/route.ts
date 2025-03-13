@@ -11,13 +11,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Token is required" }, { status: 400 });
   }
 
-  const { valid, decodedToken, error } = await validateToken(
-    token,
-    requiredScopes,
-    {
-      authority: process.env.NEXT_PUBLIC_COGNITO_AUTHORITY || "",
-    }
-  );
+  const { valid, error } = await validateToken(token, requiredScopes, {
+    authority: process.env.NEXT_PUBLIC_COGNITO_AUTHORITY || "",
+  });
 
   if (!valid && error) {
     console.log({ error });
