@@ -58,7 +58,7 @@ npm run dev
 
 ## Core Authentication Library
 
-The token validation library (`lib/auth/tokenValidator.ts`) is the central reusable component for all microservices that need to validate tokens. This library:
+The token validation library ([src/lib/auth/tokenValidator.ts](src/lib/auth/tokenValidator.ts)) is the central reusable component for all microservices that need to validate tokens. This library:
 
 - Validates JWT signatures against Cognito JWKS
 - Verifies token expiration and issuer
