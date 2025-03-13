@@ -35,18 +35,26 @@ Each scenario includes a fully functional implementation with UI and backend com
 Create a `.env.local` file with the following:
 
 ```
+# Cognito
 NEXT_PUBLIC_COGNITO_AUTHORITY="https://cognito-idp.[region].amazonaws.com/[user-pool-id]"
 NEXT_PUBLIC_COGNITO_CLIENT_ID="[app-client-id]"
 NEXT_PUBLIC_COGNITO_DOMAIN="https://[your-domain].auth.[region].amazoncognito.com"
 
+# SPA User Authentication (Scenario 1)
+NEXT_PUBLIC_COGNITO_REDIRECT_URI=http://localhost:3000/scenario1/callback
+NEXT_PUBLIC_COGNITO_LOGOUT_URI=http://localhost:3000/scenario1
+
 # For M2M auth (Scenario 3)
+NEXT_PUBLIC_M2M_DEFAULT_SCOPES="[default-scope-for-validation]"
+# Client 1
 NEXT_PUBLIC_CLIENT1_ID="[service-client-1-id]"
 NEXT_PUBLIC_CLIENT1_SECRET="[service-client-1-secret]"
 NEXT_PUBLIC_CLIENT1_SCOPES="[space-separated-scopes]"
+
+# Client 2
 NEXT_PUBLIC_CLIENT2_ID="[service-client-2-id]"
 NEXT_PUBLIC_CLIENT2_SECRET="[service-client-2-secret]"
 NEXT_PUBLIC_CLIENT2_SCOPES="[space-separated-scopes]"
-NEXT_PUBLIC_M2M_DEFAULT_SCOPES="[default-scope-for-validation]"
 ```
 
 ### Installation
