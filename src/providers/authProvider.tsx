@@ -35,6 +35,7 @@ const cognitoAuthConfig = {
   // Set onSigninCallback to prevent default redirect behavior
   onSigninCallback: () => {
     // The callback component will handle the redirect
+    console.log("onSigninCallback called");
   },
 } as AuthProviderProps;
 
