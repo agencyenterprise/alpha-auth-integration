@@ -1,18 +1,5 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
-import jwkToPem from "jwk-to-pem";
-
-type JWK = {
-  alg: string;
-  e: string;
-  kid: string;
-  kty: string;
-  n: string;
-  use: string;
-};
-
-type JWKRepository = {
-  keys: JWK[];
-};
+import jwt, { JwtPayload, JwtHeader } from "jsonwebtoken";
+import jwksRsa from "jwks-rsa";
 
 export class ValidateTokenError extends Error {
   status: number;
@@ -30,52 +17,20 @@ export interface ValidationResult {
   error?: ValidateTokenError;
 }
 
-let jwksCache: JWKRepository | null = null;
-let jwksCacheTime: number = 0;
-const JWKS_CACHE_DURATION = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
-/**
- * Fetches the JWKS (JSON Web Key Set) from the authority
- * @param authority The authority URL (e.g., Cognito user pool URL)
- * @returns The JWKS repository
- */
-async function getJwks(authority: string): Promise<JWKRepository> {
-  const currentTime = Date.now();
+const DEFAULT_AUTHORITY = process.env.NEXT_PUBLIC_COGNITO_AUTHORITY || process.env.COGNITO_AUTHORITY || "";
 
-  // Use cached JWKS if available and not expired
-  const lifetime = currentTime - jwksCacheTime;
-  if (jwksCache && lifetime < JWKS_CACHE_DURATION) {
-    return jwksCache;
-  }
+const jwks = jwksRsa({
+  cache: true,
+  rateLimit: true,
+  jwksRequestsPerMinute: 10,
+  jwksUri: `${DEFAULT_AUTHORITY}/.well-known/jwks.json`,
+})
 
-  try {
-    const jwksUri = `${authority}/.well-known/jwks.json`;
-    const response = await fetch(jwksUri);
-
-    if (!response.ok) {
-      throw new ValidateTokenError(
-        `Failed to fetch JWKS: ${response.statusText}`,
-        500
-      );
-    }
-
-    const data = (await response.json()) as JWKRepository;
-    jwksCache = data;
-    jwksCacheTime = currentTime;
-
-    return jwksCache;
-  } catch (error) {
-    if (error instanceof ValidateTokenError) {
-      throw error;
-    }
-    throw new ValidateTokenError(
-      `Failed to fetch JWKS: ${(error as Error).message}`,
-      500
-    );
-  }
+async function getKey(header: JwtHeader) {
+  const key = await jwks.getSigningKey(header.kid);
+  return key.getPublicKey();
 }
-
-const DEFAULT_AUTHORITY = process.env.NEXT_PUBLIC_COGNITO_AUTHORITY || "";
 
 /**
  * Validates a JWT token against the provided authority and required scopes
@@ -113,31 +68,9 @@ export async function validateToken(
       throw new ValidateTokenError("Invalid token format");
     }
 
-    const kid = decodedJwt.header.kid;
-    if (!kid) {
-      throw new ValidateTokenError("Token missing 'kid' in header");
-    }
-
-    // Get the JWKS
-    const jwks = await getJwks(authority);
-    const jwk = jwks.keys.find((key: JWK) => key.kid === kid);
-
-    if (!jwk) {
-      throw new ValidateTokenError("Token key (kid) not found in JWKS");
-    }
-
-    // Check if the JWK is an RSA key
-    if (jwk.kty !== "RSA") {
-      throw new ValidateTokenError(
-        "Unsupported key type, only RSA is supported"
-      );
-    }
-
-    // Convert JWK to PEM
-    const pem = jwkToPem(jwk as jwkToPem.RSA);
-
+    const secret = await getKey(decodedJwt.header);
     // Verify the token
-    const verified = jwt.verify(token, pem, {
+    const verified = jwt.verify(token, secret, {
       issuer: options.issuer || authority,
     }) as JwtPayload;
 

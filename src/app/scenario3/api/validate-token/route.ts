@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import { validateToken } from "@/lib/auth/tokenValidator";
 
 // This is a simplified token validation for demonstration purposes
